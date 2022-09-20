@@ -4,8 +4,10 @@ using UnityEngine;
 
 public class EndlessTerrain : MonoBehaviour
 {
-    const float viewerMoveThresholdForChunkUpdate = 25f;
-    const float sqrViewerMoveThresholdForChunkUpdate = viewerMoveThresholdForChunkUpdate * viewerMoveThresholdForChunkUpdate;
+    private const float scale = 1f;
+    
+    private const float viewerMoveThresholdForChunkUpdate = 25f;
+    private const float sqrViewerMoveThresholdForChunkUpdate = viewerMoveThresholdForChunkUpdate * viewerMoveThresholdForChunkUpdate;
     
     public LODInfo[] detailLevels;
     public static float maxViewDst;
@@ -19,8 +21,8 @@ public class EndlessTerrain : MonoBehaviour
     private int chunkSize;
     private int chunksVisibleInViewDst;
 
-    Dictionary<Vector2, TerrainChunk> terrainChunkDictionary = new Dictionary<Vector2, TerrainChunk>();
-    List<TerrainChunk> terrainChunksVisibleLastUpdate = new List<TerrainChunk>();
+    private Dictionary<Vector2, TerrainChunk> terrainChunkDictionary = new Dictionary<Vector2, TerrainChunk>();
+    private static List<TerrainChunk> terrainChunksVisibleLastUpdate = new List<TerrainChunk>();
 
     private void Awake()
     {
@@ -35,7 +37,7 @@ public class EndlessTerrain : MonoBehaviour
 
     private void Update()
     {
-        viewerPosition = new Vector2(viewer.position.x, viewer.position.z);
+        viewerPosition = new Vector2(viewer.position.x, viewer.position.z) / scale;
 
         if ((viewerPositionOld - viewerPosition).sqrMagnitude > sqrViewerMoveThresholdForChunkUpdate)
         {
@@ -64,10 +66,6 @@ public class EndlessTerrain : MonoBehaviour
                 if (terrainChunkDictionary.ContainsKey(viewedChunkCoord))
                 {
                     terrainChunkDictionary[viewedChunkCoord].UpdateTerrainChunk();
-                    if (terrainChunkDictionary[viewedChunkCoord].IsVisible())
-                    {
-                        terrainChunksVisibleLastUpdate.Add(terrainChunkDictionary[viewedChunkCoord]);
-                    }
                 }
                 else
                 {
@@ -79,19 +77,19 @@ public class EndlessTerrain : MonoBehaviour
 
     public class TerrainChunk
     {
-        GameObject meshObject;
-        Vector2 position;
-        Bounds bounds;
+        private GameObject meshObject;
+        private Vector2 position;
+        private Bounds bounds;
 
-        MeshRenderer meshRenderer;
-        MeshFilter meshFilter;
+        private MeshRenderer meshRenderer;
+        private MeshFilter meshFilter;
 
-        LODInfo[] detailLevels;
-        LODMesh[] lodMeshes;
+        private LODInfo[] detailLevels;
+        private LODMesh[] lodMeshes;
 
-        MapData mapData;
-        bool mapDataReceived;
-        int previousLODIndex = -1;
+        private MapData mapData;
+        private bool mapDataReceived;
+        private int previousLODIndex = -1;
 
         public TerrainChunk(Vector2 coord, int size, LODInfo[] detailLevels, Transform parent, Material material)
         {
@@ -106,8 +104,9 @@ public class EndlessTerrain : MonoBehaviour
             meshFilter = meshObject.AddComponent<MeshFilter>();
             meshRenderer.material = material;
 
-            meshObject.transform.position = positionV3;
+            meshObject.transform.position = positionV3 * scale;
             meshObject.transform.parent = parent;
+            meshObject.transform.localScale = Vector3.one * scale;
             SetVisible(false);
 
             lodMeshes = new LODMesh[detailLevels.Length];
@@ -166,6 +165,8 @@ public class EndlessTerrain : MonoBehaviour
                             lodMesh.RequestMesh(mapData);
                         }
                     }
+
+                    terrainChunksVisibleLastUpdate.Add(this);
                 }
 
                 SetVisible(visible);
@@ -188,8 +189,8 @@ public class EndlessTerrain : MonoBehaviour
         public Mesh mesh;
         public bool hasRequestedMesh;
         public bool hasMesh;
-        int lod;
-        System.Action updateCallback;
+        private int lod;
+        private System.Action updateCallback;
 
         public LODMesh(int lod, System.Action updateCallback)
         {
