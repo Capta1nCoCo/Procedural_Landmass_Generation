@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 [CreateAssetMenu()]
@@ -24,7 +22,8 @@ public class MeshSettings : UpdatableData
     {
         get
         {
-            return suppotedChunkSizes[(useFlatShading) ? flatshadedChunkSizeIndex : chunkSizeIndex] + 1;
+            // We are adding +5 in order to fix gaps between chunks.
+            return suppotedChunkSizes[(useFlatShading) ? flatshadedChunkSizeIndex : chunkSizeIndex] + 5;
         }
     }
 
